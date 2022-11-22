@@ -46,7 +46,8 @@ public:
         for (int i=0; i<width; i++) {
             for (int j=0; j<height; j++) {
                 // Give the dummy photo transition of colors
-                glm::vec3 pix = glm::vec3(i/width, j/height, i*j/length);
+                glm::vec3 pix = glm::vec3(float(i)/width, 
+                                float(j)/height, float(i*j)/length);
                 pixels.push_back(pix);
             }
         }

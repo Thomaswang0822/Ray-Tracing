@@ -15,6 +15,7 @@
 #include "Screenshot.h"
 #include "Scene.h"
 #include "Image.h"
+using namespace std;
 
 
 static const int width = 800;
@@ -23,7 +24,7 @@ static const char* title = "Scene viewer";
 static const glm::vec4 background(0.1f, 0.2f, 0.3f, 1.0f);
 static Scene scene;
 static Image image;
-static const bool RT_MODE = true;
+static bool rt_mode = false;
 
 
 #include "hw3AutoScreenshots.h"
@@ -38,6 +39,7 @@ void printHelp(){
       press 'A'/'Z' to zoom.
       press 'R' to reset camera.
       press 'L' to turn on/off the lighting.
+      press 'I to switch to image display.
     
       press Spacebar to generate images for hw3 submission.
     
@@ -60,10 +62,14 @@ void initialize(void){
     image.fillPixels();     // fill dummy colors
 }
 
-void display(void){
+void display(){
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     
-    scene.draw();
+    if (rt_mode) {
+        // cout << "Try to draw image." << endl; 
+        image.draw();
+    }
+    else {scene.draw();}
     
     glutSwapBuffers();
     glFlush();
@@ -78,6 +84,7 @@ void saveScreenShot(const char* filename = "test.png"){
 }
 
 void keyboard(unsigned char key, int x, int y){
+    rt_mode = false;    // reset, only turned to true when draw image
     switch(key){
         case 27: // Escape to quit
             exit(0);
@@ -109,10 +116,9 @@ void keyboard(unsigned char key, int x, int y){
             hw3AutoScreenshots();
             glutPostRedisplay();
             break;
-        case 'i':
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            image.draw();
-            glutSwapBuffers();
+        case 'i':   // display image
+            rt_mode = true;
+            glutPostRedisplay();
             break;
         default:
             glutPostRedisplay();
