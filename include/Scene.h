@@ -16,7 +16,7 @@
 #include "Camera.h"
 #include "SurfaceShader.h"
 #include "Light.h"
-#include "RTGeometry.h"
+#include "Geometry.h"
 #include "Material.h"
 #include "Model.h"
 
@@ -37,17 +37,14 @@ public:
     SurfaceShader* shader;
     // The following are containers of objects serving as the object palettes.
     // The containers store pointers so that they can also store derived class objects.
-    std::map< std::string, RTGeometry* > geometry;
+    std::map< std::string, Geometry* > geometry;
     std::map< std::string, Material* > material;
     std::map< std::string, Model* > model;
     std::map< std::string, Light* > light;
     
     // The container of nodes will be the scene graph after we connect the nodes by setting the child_nodes.
     std::map< std::string, Node* > node;
-    // list of triangles in world or camera coordinate
-    std::vector<Triangle> triangle_soup;
-
-    // Constructor
+    
     Scene(){
         // the default scene graph already has one node named "world."
         node["world"] = new Node;
@@ -55,9 +52,6 @@ public:
     
     void init( void );
     void draw( void );
-
-    // populate triangel soup
-    void buildTriangleSoup();
     
     // destructor
     ~Scene(){
@@ -68,7 +62,7 @@ public:
             delete entry.second;
         }
         // geometry
-        for(std::pair<std::string,RTGeometry*> entry : geometry ){
+        for(std::pair<std::string,Geometry*> entry : geometry ){
             delete entry.second;
         }
         // material

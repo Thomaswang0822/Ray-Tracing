@@ -2,15 +2,15 @@
 Scene.cpp contains the implementation of the draw command
 *****************************************************/
 #include "Scene.h"
-#include "RTCube.h"
-#include "RTObj.h"
+#include "Cube.h"
+#include "Obj.h"
 
 // The scene init definition 
 #include "Scene.inl"
 
 
 using namespace glm;
-void Scene::buildTriangleSoup(void){
+void Scene::draw(void){
     // Pre-draw sequence: assign uniforms that are the same for all Geometry::draw call.  These uniforms include the camera view, proj, and the lights.  These uniform do not include modelview and material parameters.
     camera -> computeMatrices();
     shader -> view = camera -> view;
@@ -33,8 +33,13 @@ void Scene::buildTriangleSoup(void){
     Node* cur = node["world"]; // root of the tree
     mat4 cur_VM = camera -> view; // HW3: You will update this current modelview during the depth first search.  Initially, we are at the "world" node, whose modelview matrix is just camera's view matrix.
     
-    // Init both stacks
+    // HW3: The following is the beginning of the depth-first search algorithm.
+    // HW3: The depth-first search for the node traversal has already been implemented (cur, dfs_stack).
+    // HW3: All you have to do is to also update the states of (cur_VM, matrix_stack) alongside the traversal.  You will only need to modify starting from this line.
     dfs_stack.push(cur);
+    /**
+     * TODO: (HW3 hint: you should do something here)
+     */
     matrix_stack.push(cur_VM);
     
     // Compute total number of connectivities in the graph; this would be an upper bound for
@@ -55,27 +60,32 @@ void Scene::buildTriangleSoup(void){
         
         // top-pop the stacks
         cur = dfs_stack.top();  dfs_stack.pop();
+        /**
+         * TODO: (HW3 hint: you should do something here)
+         */
         cur_VM = matrix_stack.top(); matrix_stack.pop();
         
         // draw all the models at the current node
         for ( size_t i = 0; i < cur -> models.size(); i++ ){
-            // Assign the modelview and the material.
-            shader -> modelview = cur_VM * cur -> modeltransforms[i]; 
-
-            // for each triangle in this model's elements:
-            // use tri instead of &tri: triangles in elements no change
-            for (Triangle tri : cur->models[i]->geometry->elements) {
-                tri.material = cur->models[i]->material;
-                // transform position and normal vector
-                // modelview is mat4
-                tri.transPN(shader -> modelview); // see Triangle.h
-                triangle_soup.push_back(tri);
-            }
+            // Prepare to draw the geometry. Assign the modelview and the material.
+            
+            /**
+             * TODO: (HW3 hint: you should do something here)
+             */
+            shader -> modelview = cur_VM * cur -> modeltransforms[i]; // TODO: HW3: Without updating cur_VM, modelview would just be camera's view matrix.
+            shader -> material  = ( cur -> models[i] ) -> material;
+            
+            // The draw command
+            shader -> setUniforms();
+            ( cur -> models[i] ) -> geometry -> draw();
         }
         
         // Continue the DFS: put all the child nodes of the current node in the stack
         for ( size_t i = 0; i < cur -> childnodes.size(); i++ ){
             dfs_stack.push( cur -> childnodes[i] );
+            /**
+             * TODO: (HW3 hint: you should do something here)
+             */
             matrix_stack.push(cur_VM * cur -> childtransforms[i]);
         }
         
