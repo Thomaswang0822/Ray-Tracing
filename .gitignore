@@ -5,3 +5,5 @@
 /Scene.o
 /Shader.o
 /main.o
+SceneViewer
+/*.png
