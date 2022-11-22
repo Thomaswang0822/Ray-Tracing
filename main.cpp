@@ -24,7 +24,7 @@ static const char* title = "Scene viewer";
 static const glm::vec4 background(0.1f, 0.2f, 0.3f, 1.0f);
 static Scene scene;
 static Image image;
-static bool rt_mode = false;
+static bool rt_mode = true;
 
 
 #include "hw3AutoScreenshots.h"
@@ -69,7 +69,7 @@ void display(){
         // cout << "Try to draw image." << endl; 
         image.draw();
     }
-    else {scene.draw();}
+    //else {scene.draw();}
     
     glutSwapBuffers();
     glFlush();

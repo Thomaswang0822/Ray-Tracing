@@ -1,0 +1,3 @@
+RTxx copy created: Geometry, Obj, Cube;
+
+Directly modified: Model, Scene.{cpp, h, inl}, 
