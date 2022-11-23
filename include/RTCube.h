@@ -6,8 +6,8 @@ that represents a 3D cube.
 #include <GLUT/glut.h>
 #include <OpenGL/gl3.h>
 #include <OpenGL/glext.h>
-#ifndef __CUBE_H__
-#define __CUBE_H__
+#ifndef __RTCUBE_H__
+#define __RTCUBE_H__
 
 class RTCube : public RTGeometry {
 public:

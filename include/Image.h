@@ -43,8 +43,8 @@ public:
     // Helper function: populate pixels
     void fillPixels() {
         int length = width * height;
-        for (int i=0; i<width; i++) {
-            for (int j=0; j<height; j++) {
+        for (int j=0; j<height; j++) {
+            for (int i=0; i<width; i++) {
                 // Give the dummy photo transition of colors
                 glm::vec3 pix = glm::vec3(float(i)/width, 
                                 float(j)/height, float(i*j)/length);

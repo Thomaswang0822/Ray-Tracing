@@ -1,16 +1,16 @@
 /**************************************************
-Scene.cpp contains the implementation of the draw command
+RTScene.cpp contains the implementation of the buildTriangleSoup
 *****************************************************/
-#include "Scene.h"
+#include "RTScene.h"
 #include "RTCube.h"
 #include "RTObj.h"
 
 // The scene init definition 
-#include "Scene.inl"
+#include "RTScene.inl"
 
 
 using namespace glm;
-void Scene::buildTriangleSoup(void){
+void RTScene::buildTriangleSoup(void){
     // Pre-draw sequence: assign uniforms that are the same for all Geometry::draw call.  These uniforms include the camera view, proj, and the lights.  These uniform do not include modelview and material parameters.
     camera -> computeMatrices();
     shader -> view = camera -> view;
@@ -26,11 +26,11 @@ void Scene::buildTriangleSoup(void){
     }
     
     // Define stacks for depth-first search (DFS)
-    std::stack < Node* > dfs_stack;
+    std::stack < RTNode* > dfs_stack;
     std::stack < mat4 >  matrix_stack; // HW3: You will update this matrix_stack during the depth-first search while loop.
     
     // Initialize the current state variable for DFS
-    Node* cur = node["world"]; // root of the tree
+    RTNode* cur = node["world"]; // root of the tree
     mat4 cur_VM = camera -> view; // HW3: You will update this current modelview during the depth first search.  Initially, we are at the "world" node, whose modelview matrix is just camera's view matrix.
     
     // Init both stacks
