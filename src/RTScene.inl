@@ -13,7 +13,7 @@ void RTScene::init(void){
     geometry["bunny"] = new RTObj;
     geometry["cube"] -> init();
     geometry["teapot"] -> init("models/teapot.obj");
-    geometry["bunny"] -> init("models/bunny.obj");
+    geometry["bunny"] -> init("models/teapot.obj");
     
     // Create a material palette
     material["wood"] = new Material;
@@ -108,8 +108,8 @@ void RTScene::init(void){
     node["teapot2"] -> models.push_back( model["teapot2"] );
     node["teapot2"] -> modeltransforms.push_back( scale(vec3(1.0f,1.5f,1.0f)) * scale(vec3(0.5f)) );
     
-    node["bunny"] -> models.push_back( model["bunny"] );
-    node["bunny"] -> modeltransforms.push_back( scale(vec3(0.8f)) * translate(vec3(0.0f,1.0f,0.0f)) );
+    //node["bunny"] -> models.push_back( model["bunny"] );
+    //node["bunny"] -> modeltransforms.push_back( scale(vec3(0.8f)) * translate(vec3(0.0f,1.0f,0.0f)) );
     
     node["world"] -> childnodes.push_back( node["table"] );
     node["world"] -> childtransforms.push_back( mat4(1.0f) );

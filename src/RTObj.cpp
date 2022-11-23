@@ -79,7 +79,7 @@ void RTObj::init(const char * filename){
     std::cout << "done." << std::endl;
     
     // populate element
-    std::cout << "Populating triangle soup...";
+    std::cout << "RT: Populating RTObj::elements ...";
     int idx, idx1, idx2;
     for (int i=0; i<36; i+=3) {
         Triangle tri = Triangle();

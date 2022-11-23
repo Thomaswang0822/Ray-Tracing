@@ -16,6 +16,7 @@
 #include "Scene.h"
 #include "RTScene.h"    // so that we can switch b/w 2 scenes
 #include "Image.h"
+#include "RayTracer.h"
 using namespace std;
 
 
@@ -55,13 +56,22 @@ void initialize(void){
     
     // Initialize scene
     scene.init();
+    rtscene.init();
+    rtscene.buildTriangleSoup();
+    cout << "light size: " << rtscene.light.size() << endl; 
+    cout << "geometry size: " << rtscene.geometry.size() << endl; 
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);
 
     // Initialize image
     image.init(width, height);
-    image.fillPixels();     // fill dummy colors
+    image.fillPixels();     // fill dummy colors; test for Image class
+
+    cout << "Raytrace() begin" << endl;
+    Camera rtCam = *(rtscene.camera);
+    RayTracer::Raytrace(rtCam, &rtscene, image);
+    cout << "Raytrace() done" << endl;
 }
 
 void display(){
