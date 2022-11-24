@@ -47,7 +47,7 @@ Ray RayTracer::RayThruPixel(Camera cam, int i, int j, int width, int height){
         + beta * tanf(fovy_h)
         - w
     ); 
-    return Ray(cam.eye, dir);
+    return Ray(cam.eye, dir);   // return Ray in World coord
 
 };//page 10,18
 
