@@ -13,7 +13,7 @@
 #endif
 
 #include "RayTracer.h"
-static int max_depth = 5;
+static int max_depth = 3;
 
 void RayTracer::Raytrace(Camera cam, RTScene* scene, Image &image) {
     std::cout << "Raytrace() called" << std::endl;
@@ -27,7 +27,7 @@ void RayTracer::Raytrace(Camera cam, RTScene* scene, Image &image) {
             hit = Intersect( ray, scene );
             // std::cout << "hit found" << std::endl;
             // pixels is 1d vector
-            image.pixels[j*w + i] = FindColor( hit, max_depth );
+            image.pixels[j*w + i] = glm::vec3(FindColor(hit, scene, max_depth));
             // std::cout << "pixel has color" << std::endl;
             //break; // debug use: compute a single pixel only
         }
@@ -96,12 +96,34 @@ Intersection RayTracer::Intersect(Ray ray, RTScene* scene){
     return hit;
 }; //page 11, 28, 31
 
-glm::vec3 RayTracer::FindColor(Intersection hit, int recursion_depth){
-    glm::vec3 color = glm::vec3(0.f);
-    if (hit.dist < INFINITY) {
-        // if hit, white pixel
-        color = glm::vec3(1.f);
+glm::vec4 RayTracer::FindColor(Intersection hit, RTScene* scene, int recursion_depth){
+    // everything in world coord
+    Material* ma = hit.triangle->material;
+    glm::vec4 color = ma->emision;
+    // For every light
+    for (int j=0; j<scene->shader->nlights; j++) {
+        // generate 2nd ray
+        glm::vec4 lightPos = scene->shader->lightpositions[j];
+        // use work-around from HW3, to deal with vec4 light with w = 0 (infinite dist, sunlight)
+        glm::vec3 l = glm::normalize(glm::vec3(lightPos) * 1.0f - hit.P * lightPos.w);
+        //To avoid self-shadowing, the secondary ray is shot off slightly above the hitting point.
+        Ray ray2 = Ray(hit.P+0.001f, l);   // basepoint, dir to light (light - pos)
+        // Determine visibility: dist = inf means not visible
+        Intersection hit2 = Intersect(ray2, scene);
+        int visible = hit2.dist==INFINITY? 0:1;
+
+        // Shading Model; adepted from lighting.frag
+        glm::vec4 inside = ma->ambient;
+        // Add diffuse part
+        inside += ma->diffuse * std::max(glm::dot(hit.N, l), 0.f) * float(visible);
+        // count in light color; end of non-recursive part
+        inside = inside * scene->shader->lightcolors[j];
+
+        // Specular part: recursive FindColor
+        inside += ma->specular * FindColor(hit2, scene, recursion_depth+1);
+
+        // Add contribution of this light to color
+        color += inside;
     }
-    // else black
     return color;
 }; //page 15
