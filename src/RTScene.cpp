@@ -57,9 +57,9 @@ void RTScene::buildTriangleSoup(void){
         // draw all the models at the current node
         for ( size_t i = 0; i < cur -> models.size(); i++ ){
 
-            // use &tri instead of tri: 
+            // use tri instead of &tri: 
             // want postions and normals in world coord, for FindColor()
-            for (Triangle &tri : cur->models[i]->geometry->elements) {
+            for (Triangle tri : cur->models[i]->geometry->elements) {
                 tri.material = cur->models[i]->material;
                 // transform position and normal vector
                 // modelview is mat4
