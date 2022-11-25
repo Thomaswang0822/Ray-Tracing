@@ -20,8 +20,8 @@
 using namespace std;
 
 
-static const int width = 400;
-static const int height = 300;
+static const int width = 200;
+static const int height = 150;
 static const char* title = "Scene viewer";
 static const glm::vec4 background(0.1f, 0.2f, 0.3f, 1.0f);
 static Scene scene;
@@ -58,8 +58,6 @@ void initialize(void){
     scene.init();
     rtscene.init();
     rtscene.buildTriangleSoup();
-    cout << "light size: " << rtscene.light.size() << endl; 
-    cout << "geometry size: " << rtscene.geometry.size() << endl; 
 
     // Enable depth test
     glEnable(GL_DEPTH_TEST);

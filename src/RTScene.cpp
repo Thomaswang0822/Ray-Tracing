@@ -20,11 +20,11 @@ void RTScene::buildTriangleSoup(void){
     
     // Initialize the current state variable for DFS
     RTNode* cur = node["world"]; // root of the tree
-    mat4 cur_VM = camera -> view; // Initially, we are at the "world" node, whose modelview matrix is just camera's view matrix.
+    mat4 cur_M = mat4(1.0f); //  Now we use world coordinate; model matrix of world is Identity
     
     // Init both stacks
     dfs_stack.push(cur);
-    matrix_stack.push(cur_VM);
+    matrix_stack.push(cur_M);
     
     // Compute total number of connectivities in the graph; this would be an upper bound for
     // the stack size in the depth first search over the directed acyclic graph
@@ -41,7 +41,7 @@ void RTScene::buildTriangleSoup(void){
         
         // top-pop the stacks
         cur = dfs_stack.top();  dfs_stack.pop();
-        cur_VM = matrix_stack.top(); matrix_stack.pop();
+        cur_M = matrix_stack.top(); matrix_stack.pop();
         
         // draw all the models at the current node
         for ( size_t i = 0; i < cur -> models.size(); i++ ){
@@ -52,7 +52,7 @@ void RTScene::buildTriangleSoup(void){
                 tri.material = cur->models[i]->material;
                 // transform position and normal vector
                 // modelview is mat4
-                tri.transPN(cur_VM * cur -> modeltransforms[i]); // see Triangle.h
+                tri.transPN(cur_M * cur -> modeltransforms[i]); // see Triangle.h
                 triangle_soup.push_back(tri);
             }
         }
@@ -60,7 +60,7 @@ void RTScene::buildTriangleSoup(void){
         // Continue the DFS: put all the child nodes of the current node in the stack
         for ( size_t i = 0; i < cur -> childnodes.size(); i++ ){
             dfs_stack.push( cur -> childnodes[i] );
-            matrix_stack.push(cur_VM * cur -> childtransforms[i]);
+            matrix_stack.push(cur_M * cur -> childtransforms[i]);
         }
         
     } // End of DFS while loop.

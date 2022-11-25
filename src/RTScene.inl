@@ -108,13 +108,13 @@ void RTScene::init(void){
     node["teapot2"] -> models.push_back( model["teapot2"] );
     node["teapot2"] -> modeltransforms.push_back( scale(vec3(1.0f,1.5f,1.0f)) * scale(vec3(0.5f)) );
     
-    //node["bunny"] -> models.push_back( model["bunny"] );
-    //node["bunny"] -> modeltransforms.push_back( scale(vec3(0.8f)) * translate(vec3(0.0f,1.0f,0.0f)) );
+    node["bunny"] -> models.push_back( model["bunny"] );
+    node["bunny"] -> modeltransforms.push_back( scale(vec3(0.8f)) * translate(vec3(0.0f,1.0f,0.0f)) );
     
     node["world"] -> childnodes.push_back( node["table"] );
     node["world"] -> childtransforms.push_back( mat4(1.0f) );
-    node["world"] -> childnodes.push_back( node["bunny"] );
-    node["world"] -> childtransforms.push_back( translate(vec3(-1.8f,0.0f,0.0f)) * rotate( 90.0f*float(M_PI)/180.0f, vec3(0.0f, 1.0f, 0.0f) ));
+    // node["world"] -> childnodes.push_back( node["bunny"] );
+    // node["world"] -> childtransforms.push_back( translate(vec3(-1.8f,0.0f,0.0f)) * rotate( 90.0f*float(M_PI)/180.0f, vec3(0.0f, 1.0f, 0.0f) ));
     node["world"] -> models.push_back( model["bulb"] );
     node["world"] -> modeltransforms.push_back( translate(vec3(0.0f,2.0f,0.0f))*scale(vec3(0.1f)) );
     

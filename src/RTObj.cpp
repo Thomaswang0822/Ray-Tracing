@@ -81,7 +81,7 @@ void RTObj::init(const char * filename){
     // populate element
     std::cout << "RT: Populating RTObj::elements ...";
     int idx, idx1, idx2;
-    for (int i=0; i<36; i+=3) {
+    for (int i=0; i<n; i+=3) {
         Triangle tri = Triangle();
         // map i to 3 indices
         idx = indices[i]; idx1 = indices[i+1]; idx2 = indices[i+2];

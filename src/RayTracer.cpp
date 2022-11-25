@@ -44,7 +44,7 @@ Ray RayTracer::RayThruPixel(Camera cam, int i, int j, int width, int height){
     glm::vec3 v = glm::cross(w, u);
     glm::vec3 dir = glm::normalize(
         alpha * cam.aspect * tanf(fovy_h) * u 
-        + beta * tanf(fovy_h)
+        + beta * tanf(fovy_h) * v
         - w
     ); 
     return Ray(cam.eye, dir);   // return Ray in World coord
