@@ -97,13 +97,13 @@ Intersection RayTracer::Intersect(Ray ray, RTScene* scene){
 }; //page 11, 28, 31
 
 glm::vec4 RayTracer::FindColor(Intersection hit, RTScene* scene, int recursion_depth){
+    if (hit.dist == INFINITY) {
+        return glm::vec4(1.0f); // if not hit, white background
+    }
     // everything in world coord
     Material* ma = hit.triangle->material;
-    glm::vec4 color = ma->emision;
-    if (hit.dist == INFINITY) {
-        return glm::vec4(0.0f); // black background
-    }
-    return color;
+    // glm::vec4 color = ma->emision;
+    glm::vec4 color = glm::vec4(0.0f);
     // For every light
     for (int j=0; j<scene->shader->nlights; j++) {
         // generate 2nd ray
@@ -118,6 +118,7 @@ glm::vec4 RayTracer::FindColor(Intersection hit, RTScene* scene, int recursion_d
 
         // Shading Model; adepted from lighting.frag
         glm::vec4 inside = ma->ambient;
+        // inside = glm::vec4(0.0f);
         // Add diffuse part
         inside += ma->diffuse * std::max(glm::dot(hit.N, l), 0.f) * float(visible);
         // count in light color; end of non-recursive part
