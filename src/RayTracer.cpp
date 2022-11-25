@@ -100,6 +100,10 @@ glm::vec4 RayTracer::FindColor(Intersection hit, RTScene* scene, int recursion_d
     // everything in world coord
     Material* ma = hit.triangle->material;
     glm::vec4 color = ma->emision;
+    if (hit.dist == INFINITY) {
+        return glm::vec4(0.0f); // black background
+    }
+    return color;
     // For every light
     for (int j=0; j<scene->shader->nlights; j++) {
         // generate 2nd ray
@@ -109,8 +113,8 @@ glm::vec4 RayTracer::FindColor(Intersection hit, RTScene* scene, int recursion_d
         //To avoid self-shadowing, the secondary ray is shot off slightly above the hitting point.
         Ray ray2 = Ray(hit.P+0.001f, l);   // basepoint, dir to light (light - pos)
         // Determine visibility: dist = inf means not visible
-        Intersection hit2 = Intersect(ray2, scene);
-        int visible = hit2.dist==INFINITY? 0:1;
+        Intersection hitL = Intersect(ray2, scene);
+        int visible = hitL.dist==INFINITY? 0:1;
 
         // Shading Model; adepted from lighting.frag
         glm::vec4 inside = ma->ambient;
@@ -120,7 +124,7 @@ glm::vec4 RayTracer::FindColor(Intersection hit, RTScene* scene, int recursion_d
         inside = inside * scene->shader->lightcolors[j];
 
         // Specular part: recursive FindColor
-        inside += ma->specular * FindColor(hit2, scene, recursion_depth+1);
+        inside += ma->specular * FindColor(hitL, scene, recursion_depth+1);
 
         // Add contribution of this light to color
         color += inside;
