@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <math.h>
+#include <random>
 #ifdef __APPLE__
 #include <OpenGL/gl3.h>
 #include <OpenGL/glext.h>
@@ -146,3 +147,118 @@ glm::vec4 RayTracer::FindColor(Intersection hit, RTScene* scene, int recursion_d
     }
     return color;
 }; //page 15
+
+
+void RayTracer::RaytraceGlobal(Camera* cam, RTScene* scene, Image &image, int N) {
+    std::cout << "RaytraceGlobal() called" << std::endl;
+    int w = image.width; int h = image.height;
+    Ray ray;    // Ray_ij,k
+    Intersection hit; 
+    glm::vec4 colorSum;     // sum of colors by N random rays at a pixel
+    // c++ 11 trick to generate uniform random
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0, 1);//uniform distribution between 0 and 1
+    float p, q;
+    #pragma omp parallel for
+    for (int j=0; j<h; j++){
+        for (int i=0; i<w; i++){
+            for (int k=0; k<N; k++) {
+                p = dis(gen); q = dis(gen);
+                ray = RandomRayThruPixel( cam, i, j, w, h, p, q);
+                // pixels is 1d vector
+                colorSum += FindColorRR(ray, scene);
+            }
+            image.pixels[(h-1-j)*w + i] = colorSum / float(N) ;
+        }
+    }
+};
+
+/* p,q in [0,1], generated in RaytraceGlobal() 
+    Simply change those two 0.5f into p and q
+*/
+Ray RayTracer::RandomRayThruPixel(Camera* cam, int i, int j, int width, int height, float p, float q){
+    float alpha = (float(i) + p) * 2.f/width - 1.f;
+    float beta = 1.f - (float(j) + q) * 2.f/height;
+    float fovy_h = 0.5f * cam->fovy / 180.f * M_PI;     // half fovy, turn degree into rad
+
+    glm::vec3 w = glm::normalize(cam->eye - cam->target);
+    glm::vec3 u = glm::normalize(glm::cross(cam->up, w));
+    glm::vec3 v = glm::cross(w, u);
+    glm::vec3 dir = glm::normalize(
+        alpha * cam->aspect * tanf(fovy_h) * u 
+        + beta * tanf(fovy_h) * v
+        - w
+    ); 
+    return Ray(cam->eye, dir);   // return Ray in World coord
+};
+
+/* Helper function
+given 2 random numbers in [0,1],
+return a direction sampled from Lambert cosine hemisphere
+ */
+glm::vec3 sampleD(float s, float t) {
+    float u = 2.f * M_PI * s;
+    float v = sqrt(1-t*t);
+    return glm::vec3(v * cos(u), t, v * sin(u));
+}
+
+
+/* Return 1/Factor x color_ij,k */
+glm::vec4 RayTracer::FindColorRR(Ray ray, RTScene* scene){
+    glm::vec4 color(0.f); glm::vec4 totalW(1.f);
+    float factor = 1.f; int nk = 1; // path length
+    Intersection hit = Intersect(ray, scene);    // intersection with current scene;
+    int terminate;  float lambda = 0.8f; // poisson probability to terminate
+    glm::vec4 lightPos; glm::vec3 l;  // hit pos to light unit vec
+
+    bool spec;  // specular or diffuse, 0.5 vs 0.5
+    Ray ray2; // 2nd ray, may be mirror reflection (specular) or random (diffuse)
+    Intersection hit2;
+    float s, t;
+    
+    // setup uniform(0,1) generator
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0, 1);//uniform distribution between 0 and 1
+    while (true) {
+        if (hit.dist == INFINITY) {break;} // no hit: take bg color black
+        // a random number in [0,1] is less than x with probability x
+        terminate = (dis(gen) <= lambda)? 1:0;
+        // Only when hit can we have triangle access
+        Material* ma = hit.triangle->material;
+        if (terminate == 1){
+            factor *= lambda;
+            // find diffuse color only, at hit
+            glm::vec4 fiDiffuseColor(0.f);
+            for (int j=0; j<scene->shader->nlights; j++) {
+                lightPos = scene->shader->lightpositions[j];
+                l = glm::normalize(glm::vec3(lightPos) * 1.0f - hit.P * lightPos.w);
+                // Add diffuse part
+                fiDiffuseColor += ma->diffuse * std::max(glm::dot(hit.N, l), 0.f) * scene->shader->lightcolors[j];
+            }
+            color += totalW * (ma->emision + fiDiffuseColor);
+            break;
+        } else {
+            nk++;
+            factor *= (1-lambda);
+            color += totalW * ma->emision;
+            // (1) decide diffuse or specular, 0.5 vs 0.5
+            spec = (dis(gen)<=0.5)? true:false;
+            if (spec) {   // recursive specular
+                ray2 = Ray(hit.P+1e-3f*hit.N, 2.f * glm::dot(hit.N, hit.V)*hit.N - hit.V); 
+                totalW *= ma->specular;   
+            } else{
+                // sample a random-bounce diffuse ray; call helper function
+                s = dis(gen); t = dis(gen);
+                ray2 = Ray(hit.P+1e-3f*hit.N, sampleD(s, t)); 
+                totalW *= ma->diffuse;
+            }
+            // recursive call, find color of next bounce
+            color += totalW * FindColorRR(ray2, scene);
+        }
+    }
+
+    return 1/factor * color;
+};
+

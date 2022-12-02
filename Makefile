@@ -27,5 +27,3 @@ RTScene.o: src/RTScene.cpp src/RTScene.inl include/RTScene.h
 	$(CC) $(CFLAGS) $(INCFLAGS) -c src/RTScene.cpp
 clean: 
 	$(RM) *.o SceneViewer
-
- 

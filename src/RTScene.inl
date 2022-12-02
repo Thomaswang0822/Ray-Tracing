@@ -100,13 +100,13 @@ void RTScene::init(void){
     node["table top"] -> modeltransforms.push_back( translate(vec3(0.0f,-0.1f,0.0f)) * scale(vec3(2.0f,0.2f,1.0f)) );
     node["table top"] -> childnodes.push_back( node["teapot1"] );
     node["table top"] -> childtransforms.push_back( translate(vec3(-0.5f,0.0f,0.0f)) );
-    node["table top"] -> childnodes.push_back( node["teapot2"] );
-    node["table top"] -> childtransforms.push_back( translate(vec3( 0.5f,0.0f,0.0f)) * rotate( -120.0f*float(M_PI)/180.0f, vec3(0.0f, 1.0f, 0.0f) ) );
+    /* node["table top"] -> childnodes.push_back( node["teapot2"] );
+    node["table top"] -> childtransforms.push_back( translate(vec3( 0.5f,0.0f,0.0f)) * rotate( -120.0f*float(M_PI)/180.0f, vec3(0.0f, 1.0f, 0.0f) ) ); */
     
     node["teapot1"] -> models.push_back( model["teapot1"] );
     node["teapot1"] -> modeltransforms.push_back( scale(vec3(0.5f)) );
-    node["teapot2"] -> models.push_back( model["teapot2"] );
-    node["teapot2"] -> modeltransforms.push_back( scale(vec3(1.0f,1.5f,1.0f)) * scale(vec3(0.5f)) );
+    /* node["teapot2"] -> models.push_back( model["teapot2"] );
+    node["teapot2"] -> modeltransforms.push_back( scale(vec3(1.0f,1.5f,1.0f)) * scale(vec3(0.5f)) ); */
     
     /* node["bunny"] -> models.push_back( model["bunny"] );
     node["bunny"] -> modeltransforms.push_back( scale(vec3(0.8f)) * translate(vec3(0.0f,1.0f,0.0f)) );  */

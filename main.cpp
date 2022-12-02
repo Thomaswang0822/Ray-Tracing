@@ -78,7 +78,8 @@ void display(){
         if (!rt_called) {
             // do RT at current camera pos
             cout << "Raytrace() begin" << endl;
-            RayTracer::Raytrace(rtscene.camera, &rtscene, image);
+            // RayTracer::Raytrace(rtscene.camera, &rtscene, image);
+            RayTracer::RaytraceGlobal(rtscene.camera, &rtscene, image, 3);
             cout << "Raytrace() done" << endl;
             // will be set back to false after 'r'
             rt_called = true;
