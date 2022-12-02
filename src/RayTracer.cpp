@@ -13,13 +13,14 @@
 #endif
 
 #include "RayTracer.h"
-static int max_depth = 3;
+static const int max_depth = 3;
 
-void RayTracer::Raytrace(Camera cam, RTScene* scene, Image &image) {
+void RayTracer::Raytrace(Camera* cam, RTScene* scene, Image &image) {
     std::cout << "Raytrace() called" << std::endl;
     int w = image.width; int h = image.height;
     Ray ray;
     Intersection hit; 
+    // image.pixels.clear();
     for (int j=0; j<h; j++){
         for (int i=0; i<w; i++){
             ray = RayThruPixel( cam, i, j, w, h );
@@ -27,27 +28,26 @@ void RayTracer::Raytrace(Camera cam, RTScene* scene, Image &image) {
             hit = Intersect( ray, scene );
             // std::cout << "hit found" << std::endl;
             // pixels is 1d vector
-            image.pixels[j*w + i] = glm::vec3(FindColor(hit, scene, max_depth));
-            // std::cout << "pixel has color" << std::endl;
-            //break; // debug use: compute a single pixel only
+            image.pixels[(h-1-j)*w + i] = glm::vec3(FindColor(hit, scene, 1));
+            // image.pixels.push_back(glm::vec3(FindColor(hit, scene, 1)));
         }
     }
 }; // page 9
 
-Ray RayTracer::RayThruPixel(Camera cam, int i, int j, int width, int height){
+Ray RayTracer::RayThruPixel(Camera* cam, int i, int j, int width, int height){
     float alpha = (float(i) + 0.5f) * 2.f/width - 1.f;
     float beta = 1.f - (float(j) + 0.5f) * 2.f/height;
-    float fovy_h = 0.5f * cam.fovy / 180.f * M_PI;     // half fovy, turn degree into rad
+    float fovy_h = 0.5f * cam->fovy / 180.f * M_PI;     // half fovy, turn degree into rad
 
-    glm::vec3 w = glm::normalize(cam.eye - cam.target);
-    glm::vec3 u = glm::normalize(glm::cross(cam.up, w));
+    glm::vec3 w = glm::normalize(cam->eye - cam->target);
+    glm::vec3 u = glm::normalize(glm::cross(cam->up, w));
     glm::vec3 v = glm::cross(w, u);
     glm::vec3 dir = glm::normalize(
-        alpha * cam.aspect * tanf(fovy_h) * u 
+        alpha * cam->aspect * tanf(fovy_h) * u 
         + beta * tanf(fovy_h) * v
         - w
     ); 
-    return Ray(cam.eye, dir);   // return Ray in World coord
+    return Ray(cam->eye, dir);   // return Ray in World coord
 
 };//page 10,18
 
@@ -98,12 +98,12 @@ Intersection RayTracer::Intersect(Ray ray, RTScene* scene){
 
 glm::vec4 RayTracer::FindColor(Intersection hit, RTScene* scene, int recursion_depth){
     if (hit.dist == INFINITY) {
-        return glm::vec4(1.0f); // if not hit, white background
+        return glm::vec4(0.0f); // if not hit, black background / no light color
     }
     // everything in world coord
     Material* ma = hit.triangle->material;
-    // glm::vec4 color = ma->emision;
-    glm::vec4 color = glm::vec4(0.0f);
+    glm::vec4 color = ma->emision;
+    // glm::vec4 color = glm::vec4(0.0f);
     // For every light
     for (int j=0; j<scene->shader->nlights; j++) {
         // generate 2nd ray
@@ -111,24 +111,37 @@ glm::vec4 RayTracer::FindColor(Intersection hit, RTScene* scene, int recursion_d
         // use work-around from HW3, to deal with vec4 light with w = 0 (infinite dist, sunlight)
         glm::vec3 l = glm::normalize(glm::vec3(lightPos) * 1.0f - hit.P * lightPos.w);
         //To avoid self-shadowing, the secondary ray is shot off slightly above the hitting point.
-        Ray ray2 = Ray(hit.P+0.001f, l);   // basepoint, dir to light (light - pos)
+        Ray rayLight = Ray(hit.P+1e-3f*hit.N, l);   // basepoint, dir to light (light - pos)
         // Determine visibility: dist = inf means not visible
-        Intersection hitL = Intersect(ray2, scene);
+        Intersection hitL = Intersect(rayLight, scene);
         int visible = hitL.dist==INFINITY? 0:1;
 
         // Shading Model; adepted from lighting.frag
         glm::vec4 inside = ma->ambient;
-        // inside = glm::vec4(0.0f);
         // Add diffuse part
         inside += ma->diffuse * std::max(glm::dot(hit.N, l), 0.f) * float(visible);
-        // count in light color; end of non-recursive part
-        inside = inside * scene->shader->lightcolors[j];
 
-        // Specular part: recursive FindColor
-        inside += ma->specular * FindColor(hitL, scene, recursion_depth+1);
+        // Specular part no recursion: 
+        // old Blinn–Phong specular reflection if depth reaches limit
+        if (recursion_depth == max_depth) {
+        // if (recursion_depth<max_depth) {    // DEBUG
+            // find h
+            glm::vec3 h = glm::normalize(hit.V + l);
+            inside += ma->specular * pow( 
+                glm::max(glm::dot(hit.N, h), 0.f), 
+                ma->shininess
+            );
+        }
 
         // Add contribution of this light to color
-        color += inside;
+        color += inside * scene->shader->lightcolors[j];
+    }
+    // recurvise specular 
+    if((recursion_depth < max_depth)) {
+        // mirror reflection ray
+        Ray ray2 = Ray(hit.P+1e-3f*hit.N, 2.f * glm::dot(hit.N, hit.V)*hit.N - hit.V);    
+        Intersection hit2 = Intersect(ray2, scene);
+        color += ma->specular * FindColor(hit2, scene, recursion_depth+1);
     }
     return color;
 }; //page 15

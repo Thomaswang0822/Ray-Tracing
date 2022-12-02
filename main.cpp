@@ -20,14 +20,15 @@
 using namespace std;
 
 
-static const int width = 200;
-static const int height = 150;
+static const int width = 400;
+static const int height = 300;
 static const char* title = "Scene viewer";
 static const glm::vec4 background(0.1f, 0.2f, 0.3f, 1.0f);
 static Scene scene;
 static RTScene rtscene;
 static Image image;
 static bool rt_mode = false;
+static bool rt_called = false;
 
 
 #include "hw3AutoScreenshots.h"
@@ -66,10 +67,7 @@ void initialize(void){
     image.init(width, height);
     image.fillPixels();     // fill dummy colors; test for Image class
 
-    cout << "Raytrace() begin" << endl;
-    Camera rtCam = *(rtscene.camera);
-    RayTracer::Raytrace(rtCam, &rtscene, image);
-    cout << "Raytrace() done" << endl;
+    
 }
 
 void display(){
@@ -77,6 +75,14 @@ void display(){
     
     if (rt_mode) {
         // cout << "Try to draw image." << endl; 
+        if (!rt_called) {
+            // do RT at current camera pos
+            cout << "Raytrace() begin" << endl;
+            RayTracer::Raytrace(rtscene.camera, &rtscene, image);
+            cout << "Raytrace() done" << endl;
+            // will be set back to false after 'r'
+            rt_called = true;
+        }
         image.draw();
     }
     else {scene.draw();}
@@ -108,14 +114,20 @@ void keyboard(unsigned char key, int x, int y){
         case 'r':
             scene.camera -> aspect_default = float(glutGet(GLUT_WINDOW_WIDTH))/float(glutGet(GLUT_WINDOW_HEIGHT));
             scene.camera -> reset();
+            // also for rtscene
+            rtscene.camera -> aspect_default = float(glutGet(GLUT_WINDOW_WIDTH))/float(glutGet(GLUT_WINDOW_HEIGHT));
+            rtscene.camera -> reset();
+            rt_called = false;  // can choose another camera pos and RT
             glutPostRedisplay();
             break;
         case 'a':
             scene.camera -> zoom(0.9f);
+            rtscene.camera -> zoom(0.9f);
             glutPostRedisplay();
             break;
         case 'z':
             scene.camera -> zoom(1.1f);
+            rtscene.camera -> zoom(1.1f);
             glutPostRedisplay();
             break;
         case 'l':
@@ -139,18 +151,22 @@ void specialKey(int key, int x, int y){
     switch (key) {
         case GLUT_KEY_UP: // up
             scene.camera -> rotateUp(-10.0f);
+            rtscene.camera -> rotateUp(-10.0f);
             glutPostRedisplay();
             break;
         case GLUT_KEY_DOWN: // down
             scene.camera -> rotateUp(10.0f);
+            rtscene.camera -> rotateUp(10.0f);
             glutPostRedisplay();
             break;
         case GLUT_KEY_RIGHT: // right
             scene.camera -> rotateRight(-10.0f);
+            rtscene.camera -> rotateRight(-10.0f);
             glutPostRedisplay();
             break;
         case GLUT_KEY_LEFT: // left
             scene.camera -> rotateRight(10.0f);
+            rtscene.camera -> rotateRight(10.0f);
             glutPostRedisplay();
             break;
     }
