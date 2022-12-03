@@ -4,6 +4,7 @@ RTScene.cpp contains the implementation of the buildTriangleSoup
 #include "RTScene.h"
 #include "RTCube.h"
 #include "RTObj.h"
+#include "glm/gtx/string_cast.hpp"
 
 // The scene init definition 
 #include "RTScene.inl"

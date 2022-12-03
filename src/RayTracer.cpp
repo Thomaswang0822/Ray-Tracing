@@ -4,6 +4,7 @@
 #include <vector>
 #include <math.h>
 #include <random>
+#include "glm/gtx/string_cast.hpp"
 #ifdef __APPLE__
 #include <OpenGL/gl3.h>
 #include <OpenGL/glext.h>
@@ -26,9 +27,7 @@ void RayTracer::Raytrace(Camera* cam, RTScene* scene, Image &image) {
     for (int j=0; j<h; j++){
         for (int i=0; i<w; i++){
             ray = RayThruPixel( cam, i, j, w, h );
-            // std::cout << "ray found" << std::endl;
             hit = Intersect( ray, scene );
-            // std::cout << "hit found" << std::endl;
             // pixels is 1d vector
             image.pixels[(h-1-j)*w + i] = glm::vec3(FindColor(hit, scene, 1));
             // image.pixels.push_back(glm::vec3(FindColor(hit, scene, 1)));
@@ -53,7 +52,7 @@ Ray RayTracer::RayThruPixel(Camera* cam, int i, int j, int width, int height){
 
 };//page 10,18
 
-Intersection RayTracer::Intersect(Ray ray, Triangle triangle){
+Intersection RayTracer::Intersect(Ray ray, Triangle& triangle){
     // extract variable for readbility
     glm::vec3 p1, p2, p3, n1, n2, n3;
     p1 = triangle.P[0]; n1 = triangle.N[0];
@@ -79,7 +78,7 @@ Intersection RayTracer::Intersect(Ray ray, Triangle triangle){
 
     glm::vec3 q = lam1*p1 + lam2*p2 +lam3*p3;
     glm::vec3 n = glm::normalize(lam1*n1 + lam2*n2 +lam3*n3);
-
+    
     return Intersection(q, n, -ray.dir, &triangle, d);
 }; //page 30, 33
 
@@ -88,7 +87,7 @@ Intersection RayTracer::Intersect(Ray ray, RTScene* scene){
     Intersection hit;
     Intersection hit_temp;
     // Find closest intersection; test all triangles
-    for (Triangle tri : scene->triangle_soup) {
+    for (Triangle &tri : scene->triangle_soup) {
         hit_temp = Intersect(ray, tri);
         if (hit_temp.dist< mindist){ // closer than previous hit
             mindist = hit_temp.dist;
@@ -153,7 +152,6 @@ void RayTracer::RaytraceGlobal(Camera* cam, RTScene* scene, Image &image, int N)
     std::cout << "RaytraceGlobal() called" << std::endl;
     int w = image.width; int h = image.height;
     Ray ray;    // Ray_ij,k
-    Intersection hit; 
     glm::vec4 colorSum;     // sum of colors by N random rays at a pixel
     // c++ 11 trick to generate uniform random
     std::random_device rd;
@@ -163,6 +161,7 @@ void RayTracer::RaytraceGlobal(Camera* cam, RTScene* scene, Image &image, int N)
     #pragma omp parallel for
     for (int j=0; j<h; j++){
         for (int i=0; i<w; i++){
+            colorSum = glm::vec4(0.f);
             for (int k=0; k<N; k++) {
                 p = dis(gen); q = dis(gen);
                 ray = RandomRayThruPixel( cam, i, j, w, h, p, q);
@@ -196,6 +195,7 @@ Ray RayTracer::RandomRayThruPixel(Camera* cam, int i, int j, int width, int heig
 /* Helper function
 given 2 random numbers in [0,1],
 return a direction sampled from Lambert cosine hemisphere
+Note this direction is under hemisphere coord (normal is [0,1,0])
  */
 glm::vec3 sampleD(float s, float t) {
     float u = 2.f * M_PI * s;
@@ -203,18 +203,34 @@ glm::vec3 sampleD(float s, float t) {
     return glm::vec3(v * cos(u), t, v * sin(u));
 }
 
+/*
+Goal: given d under normal [0,1,0],
+    we need d' under normal hit.N
+Approach: Find transformation matrix T s.t. T*[0,1,0] = hit.N
+    with Rodrigues formula
+Key: rotation axis is the "average" of [0,1,0] and hit.N, then rotation angle is pi
+Return: d' with rotated frame
+*/
+glm::vec3 rotateFrame(glm::vec3 normal, glm::vec3 d) {
+    // cos(pi) = -1, sin(pi) = 0
+    glm::vec3 axis = glm::normalize(normal + glm::vec3(0,1,0));
+    // cos(pi) * Id             (1-cos pi)
+    glm::mat3 R = glm::mat3(-1.f) + 2.f * glm::outerProduct(axis, axis);
+    return R * d;
+}
+
 
 /* Return 1/Factor x color_ij,k */
 glm::vec4 RayTracer::FindColorRR(Ray ray, RTScene* scene){
     glm::vec4 color(0.f); glm::vec4 totalW(1.f);
     float factor = 1.f; int nk = 1; // path length
-    Intersection hit = Intersect(ray, scene);    // intersection with current scene;
-    int terminate;  float lambda = 0.8f; // poisson probability to terminate
+    Intersection hit;    // intersection with current scene;
+    Material* ma;
+    int terminate;  float lambda = 0.7f; // poisson probability to terminate
     glm::vec4 lightPos; glm::vec3 l;  // hit pos to light unit vec
 
     bool spec;  // specular or diffuse, 0.5 vs 0.5
     Ray ray2; // 2nd ray, may be mirror reflection (specular) or random (diffuse)
-    Intersection hit2;
     float s, t;
     
     // setup uniform(0,1) generator
@@ -222,11 +238,12 @@ glm::vec4 RayTracer::FindColorRR(Ray ray, RTScene* scene){
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0, 1);//uniform distribution between 0 and 1
     while (true) {
+        hit = Intersect(ray, scene);
         if (hit.dist == INFINITY) {break;} // no hit: take bg color black
         // a random number in [0,1] is less than x with probability x
         terminate = (dis(gen) <= lambda)? 1:0;
         // Only when hit can we have triangle access
-        Material* ma = hit.triangle->material;
+        ma = hit.triangle->material;       
         if (terminate == 1){
             factor *= lambda;
             // find diffuse color only, at hit
@@ -237,25 +254,25 @@ glm::vec4 RayTracer::FindColorRR(Ray ray, RTScene* scene){
                 // Add diffuse part
                 fiDiffuseColor += ma->diffuse * std::max(glm::dot(hit.N, l), 0.f) * scene->shader->lightcolors[j];
             }
-            color += totalW * (ma->emision + fiDiffuseColor);
+            color += totalW * (ma->emision + fiDiffuseColor);            
             break;
-        } else {
+        } else {            
             nk++;
             factor *= (1-lambda);
-            color += totalW * ma->emision;
+            color += totalW * ma->emision;            
             // (1) decide diffuse or specular, 0.5 vs 0.5
-            spec = (dis(gen)<=0.5)? true:false;
+            spec = (dis(gen)<=0.5)? true:false;           
             if (spec) {   // recursive specular
                 ray2 = Ray(hit.P+1e-3f*hit.N, 2.f * glm::dot(hit.N, hit.V)*hit.N - hit.V); 
-                totalW *= ma->specular;   
+                totalW *= ma->specular;                  
             } else{
-                // sample a random-bounce diffuse ray; call helper function
+                // sample a random-bounce diffuse ray; call helper functions
                 s = dis(gen); t = dis(gen);
-                ray2 = Ray(hit.P+1e-3f*hit.N, sampleD(s, t)); 
-                totalW *= ma->diffuse;
+                ray2 = Ray(hit.P+1e-3f*hit.N, rotateFrame(hit.N, sampleD(s, t)) );
+                totalW *= ma->diffuse;                
             }
             // recursive call, find color of next bounce
-            color += totalW * FindColorRR(ray2, scene);
+            ray = ray2;
         }
     }
 

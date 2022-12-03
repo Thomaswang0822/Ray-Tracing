@@ -66,8 +66,6 @@ void initialize(void){
     // Initialize image
     image.init(width, height);
     image.fillPixels();     // fill dummy colors; test for Image class
-
-    
 }
 
 void display(){
