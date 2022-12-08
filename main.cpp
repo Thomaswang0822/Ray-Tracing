@@ -20,8 +20,8 @@
 using namespace std;
 
 
-static const int width = 200;
-static const int height = 150;
+static const int width = 400;
+static const int height = 300;
 static const char* title = "Scene viewer";
 static const glm::vec4 background(0.1f, 0.2f, 0.3f, 1.0f);
 static Scene scene;
@@ -76,8 +76,8 @@ void display(){
         if (!rt_called) {
             // do RT at current camera pos
             cout << "Raytrace() begin" << endl;
-            // RayTracer::Raytrace(rtscene.camera, &rtscene, image);
-            RayTracer::RaytraceGlobal(rtscene.camera, &rtscene, image, 3);
+            RayTracer::Raytrace(rtscene.camera, &rtscene, image);
+            // RayTracer::RaytraceGlobal(rtscene.camera, &rtscene, image, 3);
             cout << "Raytrace() done" << endl;
             // will be set back to false after 'r'
             rt_called = true;

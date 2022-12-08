@@ -49,7 +49,7 @@ Shoot a ray from camera through the **center** of (i,j)-th pixel.
 The key is to turn the position (i,j) ranging from (0,0) to (height-1, width-1) 
 in the index space into normalized device coordinate (NDC),
 which ranges from (-1,-1) to (1,1), bottom-left to top-right.    
-Define: $\alpha=2 \cdot \frac{i+0.5}{width}-1$, $\beta=1-2\cdot \frac{j+0.5}{height}$ 
+Define: $\alpha=2 \cdot \frac{i+0.5}{width}-1$, $\beta=1-2\cdot \frac{j+0.5}{height}$.  
 $(\alpha, \beta)$ is the pixel in NDC. After some derivations
 the ray direction (before normalization) in the world coordinate is given by the following: 
 $$(\alpha \cdot asp \cdot \tan(fovy/2)u + \beta \cdot \tan(fovy/2)v - w)$$
@@ -88,12 +88,16 @@ return color
 ```
 ## About Color: Blinn–Phong Reflection Model
 This section contains a more in-depth introduction of the Blinn–Phong Reflection Model our FindColor() method based on. If you are interested in the formula and all the details behind, the [Wikipedia page](https://en.wikipedia.org/wiki/Blinn%E2%80%93Phong_reflection_model) is a good place to start.  
-Blinn–Phong Reflection Model is a local-illumination model.
+Blinn–Phong Reflection Model is a local-illumination model. It makes slight computation improvement on top of the famous Phong Refection Model. They share the same idea.  
 Essentially, the color of a point on an object we see, say a teapot, is determined by all the light sources and the material of this teapot. The light property of any material can be broken down into the following: 
 - emission (light-independent): intrincic light
 - ambient: accounts for small amount of light scattered around
 - diffuse: accounts for random-direction reflection light
 - specular: accounts for mirror-like reflection light
+
+<img src="./writeup_assets/Phong_components_version_4.png" alt="drawing" width="600"/>
+
+Image by [Brad Smith](https://commons.wikimedia.org/w/index.php?curid=1030364) - Own work, CC BY-SA 3.0
 
 In particular, the RGB color we see = emission + sum of contribution from (ambient, diffuse, specular) over all lights.  
 But remember this is a local-illumination model. When a point of interest can reflect diffuse and specular light rays out, it likely will also receive diffuse and specular light rays from other objects in the scene. In a basic version raytracer, the specular part will be replaced by recursive color finding. A more advanced raytracer will also replace the diffuse part. A recursive diffuse part is much more difficult because we need several rays to shoot through a single pixel and reflect to random directions. This increases the implmentation diffuclty and computation cost.
